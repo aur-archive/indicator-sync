@@ -1,0 +1,39 @@
+# Maintainer: Balló György <ballogyor+arch at gmail dot com>
+
+pkgname=indicator-sync
+pkgver=12.10.4
+pkgrel=2
+pkgdesc="Aggregate services performing background synchronization that could take a long time"
+arch=('i686' 'x86_64')
+url="https://launchpad.net/indicator-sync"
+license=('GPL')
+depends=('libindicator3' 'ido' 'libdbusmenu-gtk3' 'hicolor-icon-theme' 'xdg-utils')
+makedepends=('intltool' 'gobject-introspection')
+options=('!libtool')
+install=$pkgname.install
+source=(http://launchpad.net/indicator-sync/${pkgver%.*}/$pkgver/+download/$pkgname-$pkgver.tar.gz
+        http://pkgbuild.com/~bgyorgy/sources/$pkgname-translations-20130310.tar.gz)
+md5sums=('fb52be58d497e5e36616cd4b92e16950'
+         '7bd38b06deb14d8cb83442c421aa12eb')
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  # Fix build
+  sed -i 's/-Werror//' src/*/Makefile.{am,in}
+
+  # Install updated language files
+  rename $pkgname- '' ../po/$pkgname-*.po
+  mv -f -t po ../po/*
+  printf "%s\n" po/*.po | sed -e 's/po\///g' -e 's/\.po//g' >po/LINGUAS
+
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --libexecdir=/usr/lib \
+              --disable-static
+  make
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  make DESTDIR="$pkgdir/" install
+}
